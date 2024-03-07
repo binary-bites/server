@@ -64,8 +64,12 @@ const uploadImageToStorage = (file) => {
           }
   
           // Upload images to Firebase Storage
-          const uploadPromises = images.map((image) => uploadImageToStorage(image));
-          const imageUrls = await Promise.all(uploadPromises);
+          const imageUrls = [];
+          if(images) {
+            const uploadPromises = images.map((image) => uploadImageToStorage(image));
+            imageUrls = await Promise.all(uploadPromises);
+          }
+          
           console.log(imageUrls);
   
           const post = new Post({ title, content, user, images: imageUrls });
@@ -81,27 +85,6 @@ const uploadImageToStorage = (file) => {
           res.status(401).json({ error: error.message });
       }
   };
-
-// export const createPost = async (req, res) => {
-//     try {
-//         console.log("IN create post")
-//         const { title, content, user, images } = req.body
-//         //checkInput(['title', 'content', 'user'], req.body);
-//         const profile = await Profile.findOne({ user })
-//         if (!profile || profile.deleted) {
-//             console.log('User does not exist')
-//             throw Error('User does not exist')
-//         }
-//         const post = new Post({ title, content, user })
-//         await post.save()
-//         const userActivity = await UserActivity.findOne({ user })
-//         userActivity.posts.push(post._id)
-//         await userActivity.save()
-//         res.status(200).json( post )
-//     } catch (error) {
-//         res.status(401).json({ error: error.message })
-//     }
-// }
 
 export const getPost = async (req, res) => {
     try {
