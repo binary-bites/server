@@ -1,7 +1,8 @@
-import User from '../models/userModel.ts';
-import { getAuth } from 'firebase-admin/auth';
+import User from '../models/userModel.js';
+import { auth } from '../utils/firebase.js';
 
 const requireAuth = async (req, res, next) => {
+    console.log(req.body, process.env.ADMIN_PASSWORD)
     if(req.body.adminPassword || req.query.adminPassword) {
         if((req.body.adminPassword === process.env.ADMIN_PASSWORD || req.query.adminPassword === process.env.ADMIN_PASSWORD) && (req.body.user || req.query.user)) {
             if(!req.body.user) {
@@ -11,6 +12,7 @@ const requireAuth = async (req, res, next) => {
             return;
         }
     }
+
     if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
         return res.status(403).send('Unauthorized');
       }
@@ -18,7 +20,7 @@ const requireAuth = async (req, res, next) => {
       const token = req.headers.authorization.split('Bearer ')[1];
     
       try {
-        const decodedToken = await getAuth().verifyIdToken(token,true);
+        const decodedToken = await auth.verifyIdToken(token,true);
         let firebaseToken = null
         firebaseToken = decodedToken.uid
         if(firebaseToken === null){

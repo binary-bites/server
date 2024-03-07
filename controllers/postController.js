@@ -1,27 +1,23 @@
-import User from '../models/userModel.ts'
+import User from '../models/userModel.js'
 import Profile from '../models/profileModel.js'
 import UserActivity from '../models/userActivityModel.js'
-import Comment from '../models/commentModel.ts'
-import Post from '../models/postModel.ts'
-import  checkInput  from '../utils/utils.js'
+import Comment from '../models/commentModel.js'
+import Post from '../models/postModel.js'
+import checkInput from '../utils/utils.js'
 import { deleteCommentHelper } from './commentController.js'
 import { mongoose } from 'mongoose'
 import admin from 'firebase-admin'
-import serviceAccount from "../serviceAccount.json" with { type: "json" };
+import { storageBucket } from '../utils/firebase.js'
 
-
-const bucket = admin.storage().bucket();
-
-//MAKE CREATE POST AND EDIT POST TAKE IMAGES
 
 const uploadImageToStorage = (file) => {
     return new Promise((resolve, reject) => {
       if (!file) {
         reject('No image file');
       }
-      let newFileName = `${Date.now()}_${file.originalname}`;
+      let newFileName = `pictures/${Date.now()}_${file.originalname}`;
   
-      let fileUpload = bucket.file(newFileName);
+      let fileUpload = storageBucket.file(newFileName);
   
       const blobStream = fileUpload.createWriteStream({
         metadata: {
@@ -34,14 +30,25 @@ const uploadImageToStorage = (file) => {
       });
   
       blobStream.on('finish', () => {
-        // The public URL can be used to directly access the file via HTTP.
-        const url = `https://storage.googleapis.com/${bucket.name}/${fileUpload.name}`;
-        resolve(url);
+        // After upload, generate a signed URL for read access
+        fileUpload.getSignedUrl({
+          action: 'read',
+          expires: '03-09-2491', // Use a far future date or adjust according to your needs
+        })
+        .then(signedUrls => {
+          // signedUrls[0] contains the URL you can use to publicly access the file
+          resolve(signedUrls[0]);
+        })
+        .catch(error => {
+          reject('Failed to obtain signed URL');
+        });
       });
   
       blobStream.end(file.buffer);
     });
   };
+  
+  
   
   export const createPost = async (req, res) => {
       try {
@@ -59,6 +66,7 @@ const uploadImageToStorage = (file) => {
           // Upload images to Firebase Storage
           const uploadPromises = images.map((image) => uploadImageToStorage(image));
           const imageUrls = await Promise.all(uploadPromises);
+          console.log(imageUrls);
   
           const post = new Post({ title, content, user, images: imageUrls });
           await post.save();

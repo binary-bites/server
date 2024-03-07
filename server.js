@@ -12,11 +12,12 @@ import postRoutes from './routes/post.js';
 import commentRoutes from './routes/comment.js';
 import profileRoutes from './routes/profile.js';
 import userActivityRoutes from './routes/userActivity.js';
-import serviceAccount from "./serviceAccount.json" with { type: "json" };
-import admin from 'firebase-admin';
+import multer from 'multer';
 
 const app = express()
+const upload = multer()
 app.use(cors());
+app.use(upload.any())
 
 // middleware
 app.use(express.json())
@@ -26,10 +27,9 @@ app.use((req, res, next) => {
     next()
 })
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
-  storageBucket: 'gs://binarybytes.appspot.com' // Replace with your Firebase Storage bucket name
-});
+// admin.initializeApp({
+//   credential: admin.credential.cert(serviceAccount),
+// });
 
 app.use('/api/user', userRoutes)
 app.use('/api/post', postRoutes)
