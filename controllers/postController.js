@@ -64,7 +64,7 @@ const uploadImageToStorage = (file) => {
           }
   
           // Upload images to Firebase Storage
-          const imageUrls = [];
+          let imageUrls = [];
           if(images) {
             const uploadPromises = images.map((image) => uploadImageToStorage(image));
             imageUrls = await Promise.all(uploadPromises);
