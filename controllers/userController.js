@@ -14,7 +14,7 @@ const signUpUserFirebase = async (req, res) => {
         //checkInput(['username', 'password', 'dateOfBirth', 'firstName', 'lastName', 'email', 'firebaseID'], req.body);
 
         // Assuming req.body.username and req.body.firebaseID contain the values to check
-        const check = await findOne({
+        const check = await User.findOne({
         $or: [
             { username: req.body.username },
             { firebaseID: req.body.firebaseID }
@@ -55,6 +55,9 @@ const loginUserFirebase = async (req, res) => { // should create an access token
       }
       
       const profile = await Profile.findOne({user: user._id})
+      if(!profile || profile.deleted === true){
+        throw new Error('Profile has been deleted')
+      }
 
       res.status(200).json(profile)
     } catch (error) {
@@ -64,12 +67,13 @@ const loginUserFirebase = async (req, res) => { // should create an access token
 
   const checkCredentials = async (req, res) => {
     try {
+      console.log("made it to check")
         const { username, email } = req.body
         //checkInput(['username', 'password', 'dateOfBirth', 'firstName', 'lastName', 'email', 'firebaseID'], req.body);
 
         // Assuming req.body.username and req.body.firebaseID contain the values to check
-        const checkUsername = await findOne({ username: username });
-        const checkEmail = await findOne({ email: email });
+        const checkUsername = await User.findOne({ username: username });
+        const checkEmail = await User.findOne({ email: email });
 console.log("HI")
         let usernameExists = false
         if (checkUsername) {
