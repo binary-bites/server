@@ -12,6 +12,7 @@ import postRoutes from './routes/post.js';
 import commentRoutes from './routes/comment.js';
 import profileRoutes from './routes/profile.js';
 import userActivityRoutes from './routes/userActivity.js';
+import loggedOutRoutes from './routes/loggedOut.js';
 import multer from 'multer';
 
 const app = express()
@@ -36,6 +37,7 @@ app.use('/api/post', postRoutes)
 app.use('/api/comment', commentRoutes)
 app.use('/api/profile', profileRoutes)
 app.use('/api/userActivity', userActivityRoutes)
+app.use('/api/loggedOut', loggedOutRoutes)
 
 mongoose.connect(process.env.MONGO_URI || '')
   .then(() => {
