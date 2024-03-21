@@ -53,7 +53,7 @@ const uploadImageToStorage = (file) => {
   export const createPost = async (req, res) => {
       try {
           console.log("IN create post")
-          const { title, content, user } = req.body
+          let { title, content, user, ratings } = req.body
           // Assuming `images` are passed as an array of Express `req.files` if you're using something like multer for file handling
           const images = req.files; 
   
@@ -61,6 +61,10 @@ const uploadImageToStorage = (file) => {
           if (!profile || profile.deleted) {
               console.log('User does not exist')
               throw Error('User does not exist')
+          }
+
+          if (ratings) {
+            ratings = JSON.parse(ratings);
           }
   
           // Upload images to Firebase Storage
@@ -72,7 +76,7 @@ const uploadImageToStorage = (file) => {
           
           console.log(imageUrls);
   
-          const post = new Post({ title, content, user, images: imageUrls });
+          const post = new Post({ title, content, user, images: imageUrls, ratings });
           await post.save();
   
           const userActivity = await UserActivity.findOne({ user });

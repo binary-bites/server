@@ -25,6 +25,7 @@ const postSchema = new Schema ({
         default: [] 
     },
     images: [{ type: String, default: [] }],
+    type: { type: String, default: "Restaurant"},
 });
 
 export default model('Post', postSchema)
