@@ -53,7 +53,7 @@ const uploadImageToStorage = (file) => {
   export const createPost = async (req, res) => {
       try {
           console.log("IN create post")
-          let { title, content, user, ratings } = req.body
+          let { title, content, user, ratings, type } = req.body
           // Assuming `images` are passed as an array of Express `req.files` if you're using something like multer for file handling
           const images = req.files; 
   
@@ -76,7 +76,7 @@ const uploadImageToStorage = (file) => {
           
           console.log(imageUrls);
   
-          const post = new Post({ title, content, user, images: imageUrls, ratings });
+          const post = new Post({ title, content, user, images: imageUrls, ratings, type });
           await post.save();
   
           const userActivity = await UserActivity.findOne({ user });
