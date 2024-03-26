@@ -109,6 +109,19 @@ export const deletePost = async (req, res) => {
         const { postID, user } = req.body;
         checkInput(['postID', 'user'], req.body);
 
+        const post = await deletePostHelper(postID, user);
+        if (post.error) {
+            throw Error(post.error);
+        }
+
+        res.status(200).json( post );
+    } catch (error) {
+        res.status(401).json({ error: error.message });
+    }
+};
+
+export const deletePostHelper = async (postID, user) => {
+    try {
         const post = await Post.findOne({ _id: postID });
         const userActivity = await UserActivity.findOne({ user });
         if (!post || post.deleted) {
@@ -153,11 +166,24 @@ export const deletePost = async (req, res) => {
 
         await post.save();
 
-        res.status(200).json( post );
+        return post;
+    } catch (error) {
+        console.log(error);
+        return {error: error.message};
+    }
+}
+
+export const clearPosts = async (req, res) => {
+    try {
+        const posts = await Post.find({});
+        for (const post of posts) {
+            await deletePostHelper(post._id, post.user);
+        }
+        res.status(200).json({ message: 'All posts deleted' });
     } catch (error) {
         res.status(401).json({ error: error.message });
     }
-};
+}
 
 
 export const likePost = async (req, res) => {
