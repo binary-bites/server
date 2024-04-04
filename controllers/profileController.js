@@ -3,17 +3,39 @@ import Profile from '../models/profileModel.js'
 import UserActivity from '../models/userActivityModel.js'
 import Comment from '../models/commentModel.js'
 import Post from '../models/postModel.js'
-import checkInput from '../utils/utils.js'
+import {checkInput} from '../utils/utils.js'
+import { uploadImageToStorage } from '../utils/utils.js'
 
 //MAKE PROFILE PICTURE EDIT WORK
 export const editProfile = async (req, res) => {
     try {
-        const { profilePicture, bio, user } = req.body
+        const { bio, firstName, lastName, user } = req.body
+        console.log("FILES", req.files)
         const profile = await Profile.findOne({ user });
-        if (!profile) {
+        const userObject = await User.findOne({ _id: user });
+        if (!profile || !userObject) {
             throw Error('Profile does not exist');
         }
         if(bio) profile.bio = bio;
+        if (firstName) {
+            profile.firstName = firstName;
+            userObject.firstName = firstName;
+        }
+        if (lastName) {
+            profile.lastName = lastName;
+            userObject.lastName = lastName;
+        }
+        let profilePicture = null;
+        if (req.files && req.files[0]) {
+            console.log('in here')
+            const image = req.files[0];
+            const uploadPromises = uploadImageToStorage(image);
+            profilePicture = await uploadPromises;
+        }
+        if (profilePicture) {
+            profile.profilePicture = profilePicture;
+        }
+        await userObject.save();
         await profile.save();
         res.status(200).json( profile );
     } catch (error) {
@@ -66,6 +88,30 @@ export const followUser = async (req, res) => {
     catch (error) {
         res.status(401).json({ error: error.message });
     }
+}
+
+export const getProfilePosts = async (req, res) => {
+    try {
+        const { otherUser } = req.query
+        const user = req.body.user;
+        if (otherUser) {
+            const profile = await Profile.findOne({ user: otherUser });
+            if (!profile) {
+                throw Error('Profile does not exist');
+            }
+            const posts = await Post.find({ user: otherUser, deleted: false }).populate('user');
+            return res.status(200).json( posts );
+        }
+        const profile = await Profile.findOne({ user });
+        if (!profile) {
+            throw Error('Profile does not exist');
+        }
+        const posts = await Post.find({ user, deleted: false }).populate('user');
+        res.status(200).json( posts );
+    } catch (error) {
+        res.status(401).json({ error: error.message });
+    }
+
 }
 
 export const getFollowers = async (req, res) => {

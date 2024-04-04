@@ -3,51 +3,11 @@ import Profile from '../models/profileModel.js'
 import UserActivity from '../models/userActivityModel.js'
 import Comment from '../models/commentModel.js'
 import Post from '../models/postModel.js'
-import checkInput from '../utils/utils.js'
+import {checkInput} from '../utils/utils.js'
 import { deleteCommentHelper } from './commentController.js'
 import { mongoose } from 'mongoose'
 import admin from 'firebase-admin'
-import { storageBucket } from '../utils/firebase.js'
-
-
-const uploadImageToStorage = (file) => {
-    return new Promise((resolve, reject) => {
-      if (!file) {
-        reject('No image file');
-      }
-      let newFileName = `pictures/${Date.now()}_${file.originalname}`;
-  
-      let fileUpload = storageBucket.file(newFileName);
-  
-      const blobStream = fileUpload.createWriteStream({
-        metadata: {
-          contentType: file.mimetype,
-        },
-      });
-  
-      blobStream.on('error', (error) => {
-        reject('Something is wrong! Unable to upload at the moment.');
-      });
-  
-      blobStream.on('finish', () => {
-        // After upload, generate a signed URL for read access
-        fileUpload.getSignedUrl({
-          action: 'read',
-          expires: '03-09-2491', // Use a far future date or adjust according to your needs
-        })
-        .then(signedUrls => {
-          // signedUrls[0] contains the URL you can use to publicly access the file
-          resolve(signedUrls[0]);
-        })
-        .catch(error => {
-          reject('Failed to obtain signed URL');
-        });
-      });
-  
-      blobStream.end(file.buffer);
-    });
-  };
-  
+import { uploadImageToStorage } from '../utils/utils.js'
   
   
   export const createPost = async (req, res) => {
