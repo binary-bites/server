@@ -7,7 +7,7 @@ import checkInput from '../utils/utils.js';
 
 export const getPosts = async (req, res) => {
     try {
-        const { followingFilter, typeFilter, lowRating, highRating, savedFilter } = req.query;
+        const { followingFilter, typeFilter, lowRating, highRating, savedFilter, searchQuery } = req.query;
         const user = req.body.user;
 
         const profile = await Profile.findOne({ user });
@@ -24,6 +24,13 @@ export const getPosts = async (req, res) => {
         }
         if (savedFilter) {
             matchQuery._id = { $in: profile.savedPosts };
+        }
+        if (searchQuery) {
+            // Adding the searchQuery condition to the matchQuery
+            matchQuery.$or = [
+                { title: { $regex: searchQuery, $options: 'i' } }, // Case-insensitive search in title
+                { content: { $regex: searchQuery, $options: 'i' } } // Case-insensitive search in content
+            ];
         }
 
         if (lowRating != null && highRating != null) {
