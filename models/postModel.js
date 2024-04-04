@@ -12,9 +12,9 @@ const postSchema = new Schema ({
     date: { type: Date, default: Date.now},
     deleted: { type: Boolean, default: false },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    dislikes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User', default: []}],
+    dislikes: [{ type: Schema.Types.ObjectId, ref: 'User', default: []}],
+    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', default: []}],
     ratings: {
         type: [
             {

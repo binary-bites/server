@@ -1,42 +1,39 @@
-import User from '../models/userModel.js'
-import Profile from '../models/profileModel.js'
-import UserActivity from '../models/userActivityModel.js'
-import Comment from '../models/commentModel.js'
-import Post from '../models/postModel.js'
-import checkInput from '../utils/utils.js'
+import User from '../models/userModel.js';
+import Profile from '../models/profileModel.js';
+import UserActivity from '../models/userActivityModel.js';
+import Comment from '../models/commentModel.js';
+import Post from '../models/postModel.js';
+import checkInput from '../utils/utils.js';
 
 export const getPosts = async (req, res) => {
     try {
-        const { followingFilter, typeFilter, lowRating, highRating } = req.query;
-        const user = req.body.user
-        // Initial base query - posts that are not deleted
-        let matchQuery = { deleted: false };
+        const { followingFilter, typeFilter, lowRating, highRating, savedFilter } = req.query;
+        const user = req.body.user;
 
-        // If followingFilter is true, adjust the query to include only the posts from following users
+        const profile = await Profile.findOne({ user });
+        if (!profile || profile.deleted) {
+            throw Error('Profile does not exist');
+        }
+
+        let matchQuery = { deleted: false };
         if (followingFilter) {
-            const profile = await Profile.findOne({ user });
-            if (!profile || profile.deleted) {
-                throw Error('Profile does not exist');
-            }
             matchQuery.user = { $in: profile.following };
         }
-
-        // If typeFilter is specified (Homemade or Restaurant), adjust the query to include only posts of that type
         if (typeFilter) {
-            matchQuery.type = typeFilter; // Assumes typeFilter is either 'Homemade', 'Restaurant', or null
+            matchQuery.type = typeFilter;
+        }
+        if (savedFilter) {
+            matchQuery._id = { $in: profile.savedPosts };
         }
 
-        // If rating filters are specified, we need to handle this in the aggregation pipeline
         if (lowRating != null && highRating != null) {
-            const posts = await Post.aggregate([
+            const pipeline = [
                 { $match: matchQuery },
                 {
                     $project: {
-                        user: 1, // Include user field in the output
+                        user: 1, // Include necessary fields
                         type: 1,
-                        averageRating: {
-                            $avg: "$ratings.stars" // Calculate the average rating
-                        },
+                        averageRating: { $avg: "$ratings.stars" },
                         title: 1,
                         content: 1,
                         date: 1,
@@ -46,31 +43,30 @@ export const getPosts = async (req, res) => {
                         comments: 1,
                         ratings: 1,
                         images: 1
-                        
                     }
                 },
-                { 
-                    $match: {
-                        averageRating: { 
-                            $gte: parseFloat(lowRating), 
-                            $lte: parseFloat(highRating)
-                        }
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'users', // Adjust based on your collection name
-                        localField: 'user',
-                        foreignField: '_id',
-                        as: 'user'
-                    }
-                },
-                { $sort: { createdAt: -1 } } // Sort by creation date, descending
-            ]);
+                { $match: { averageRating: { $gte: parseFloat(lowRating), $lte: parseFloat(highRating) } } },
+                { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
+                { $sort: { createdAt: -1 } }
+            ];
+
+            let posts = await Post.aggregate(pipeline);
+            posts = posts.map(post => ({
+                ...post,
+                liked: post.likes.includes(profile.user),
+                disliked: post.dislikes.includes(profile.user),
+                saved: profile.savedPosts.includes(post._id)
+            }));
             res.status(200).json(posts);
         } else {
-            // If we're not filtering by rating, we can use a simpler query
-            let posts = await Post.find(matchQuery).populate('user').sort({ createdAt: -1 });
+            // For simpler queries without rating filter
+            let posts = await Post.find(matchQuery).populate('user').sort({ createdAt: -1 }).lean();
+            posts = posts.map(post => ({
+                ...post,
+                liked: post.likes.includes(profile.user),
+                disliked: post.dislikes.includes(profile),
+                saved: profile.savedPosts.includes(post._id)
+            }));
             res.status(200).json(posts);
         }
     } catch (error) {

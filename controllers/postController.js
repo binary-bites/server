@@ -90,19 +90,33 @@ const uploadImageToStorage = (file) => {
       }
   };
 
-export const getPost = async (req, res) => {
+  export const getPost = async (req, res) => {
     try {
-        const { postID } = req.query
-        checkInput(['postID'], req.query)
-        const post = await Post.findOne({ _id: postID })
+        const { postID } = req.query;
+        const user = req.body.user;
+        checkInput(['postID'], req.query);
+
+        const post = await Post.findOne({ _id: postID }).lean(); // Use .lean() for performance, if you don't need a full Mongoose document
         if (!post || post.deleted) {
-            throw Error('Post does not exist')
+            throw Error('Post does not exist');
         }
-        res.status(200).json( post )
+
+        const profile = await Profile.findOne({ user: user }).lean(); // Assuming 'user' is the ID or unique identifier
+        if (!profile) {
+            throw Error('Profile does not exist');
+        }
+        
+        post.liked = post.likes && post.likes.map(id => id.toString()).includes(profile.user.toString());
+        post.disliked = post.dislikes && post.dislikes.map(id => id.toString()).includes(profile.user.toString());
+        post.saved = profile.savedPosts && profile.savedPosts.map(id => id.toString()).includes(post._id.toString());
+
+        res.status(200).json(post);
     } catch (error) {
-        res.status(401).json({ error: error.message })
+        res.status(401).json({ error: error.message });
     }
-}
+};
+
+
 
 export const deletePost = async (req, res) => {
     try {
@@ -262,6 +276,30 @@ export const editPost = async (req, res) => {
         if(content) post.content = content;
         await post.save();
         res.status(200).json( post );
+    } catch (error) {
+        res.status(401).json({ error: error.message });
+    }
+}
+
+export const savePost = async (req, res) => {
+    try {
+        const { postID, user } = req.body;
+        checkInput(['postID', 'user'], req.body);
+        const post = await Post.findOne({ _id: postID});
+        if (!post || post.deleted) {
+            throw Error('Post does not exist');
+        }
+        const profile = await Profile.findOne({ user });
+        if (!profile || profile.deleted) {
+            throw Error('Profile does not exist');
+        }
+        if (profile.savedPosts.includes(post._id)) {
+            profile.savedPosts = profile.savedPosts.filter(savedPost => !savedPost.equals(post._id));
+        } else {
+            profile.savedPosts.push(post._id);
+        }
+        await profile.save();
+        res.status(200).json( profile );
     } catch (error) {
         res.status(401).json({ error: error.message });
     }

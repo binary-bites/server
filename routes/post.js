@@ -1,6 +1,6 @@
 import { Router } from 'express'
 
-import { clearPosts, createPost, deletePost, likePost, dislikePost, editPost, getPost } from '../controllers/postController.js'
+import { savePost, clearPosts, createPost, deletePost, likePost, dislikePost, editPost, getPost } from '../controllers/postController.js'
 import requireAuth from '../middleware/requireAuth.js'
 
 const router = Router()
@@ -13,5 +13,6 @@ router.post('/dislike', dislikePost)
 router.post('/edit', editPost)
 router.get('/get', getPost)
 router.delete('/clear', clearPosts)
+router.post('/save', savePost)
 
 export default router
