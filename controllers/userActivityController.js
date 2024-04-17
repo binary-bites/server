@@ -54,9 +54,12 @@ export const getPosts = async (req, res) => {
                 },
                 { $match: { averageRating: { $gte: parseFloat(lowRating), $lte: parseFloat(highRating) } } },
                 { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
+                { $lookup: { from: 'comments', localField: 'comments', foreignField: '_id', as: 'comments' } },
+                { $unwind: '$user' },
+                { $lookup: { from: 'users', localField: 'comments.user', foreignField: '_id', as: 'comments.user' } },
                 { $sort: { createdAt: -1 } }
             ];
-
+        
             let posts = await Post.aggregate(pipeline);
             posts = posts.map(post => ({
                 ...post,
@@ -67,15 +70,27 @@ export const getPosts = async (req, res) => {
             res.status(200).json(posts);
         } else {
             // For simpler queries without rating filter
-            let posts = await Post.find(matchQuery).populate('user').sort({ createdAt: -1 }).lean();
+            let posts = await Post.find(matchQuery)
+                .populate({
+                    path: 'user'
+                })
+                .populate({
+                    path: 'comments',
+                    populate: {
+                        path: 'user',
+                        model: 'User' // Ensure this matches your user model name
+                    }
+                })
+                .sort({ createdAt: -1 })
+                .lean();
             posts = posts.map(post => ({
                 ...post,
                 liked: post.likes.includes(profile.user),
-                disliked: post.dislikes.includes(profile),
+                disliked: post.dislikes.includes(profile.user),
                 saved: profile.savedPosts.includes(post._id)
             }));
             res.status(200).json(posts);
-        }
+        }        
     } catch (error) {
         res.status(401).json({ error: error.message });
     }

@@ -22,7 +22,8 @@ export const createComment = async (req, res) => {
         const userActivity = await UserActivity.findOne({ user })
         userActivity.comments.push(comment._id)
         await userActivity.save()
-        res.status(200).json( comment )
+        const retComment = await Comment.findOne({ _id: comment._id }).populate('user').lean()
+        res.status(200).json( retComment )
     } catch (error) {
         res.status(401).json({ error: error.message })
     }
