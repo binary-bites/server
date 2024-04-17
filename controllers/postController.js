@@ -56,7 +56,19 @@ import { uploadImageToStorage } from '../utils/utils.js'
         const user = req.body.user;
         checkInput(['postID'], req.query);
 
-        const post = await Post.findOne({ _id: postID }).lean(); // Use .lean() for performance, if you don't need a full Mongoose document
+        const post = await Post.findOne({ _id: postID })
+    .populate({
+      path: 'comments', // Populating the comments
+      populate: {
+        path: 'user', // Nested population for the user in each comment
+        model: 'User' // Assuming 'User' is the model name for the user
+      }
+    })
+    .populate({
+      path: 'user', // Populating the user of the post
+    })
+    .lean();
+
         if (!post || post.deleted) {
             throw Error('Post does not exist');
         }

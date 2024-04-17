@@ -3,14 +3,22 @@ import Profile from '../models/profileModel.js'
 import UserActivity from '../models/userActivityModel.js'
 import Comment from '../models/commentModel.js'
 import Post from '../models/postModel.js'
+import mongoose from 'mongoose';
 import {checkInput} from '../utils/utils.js'
 
 export const createComment = async (req, res) => {
     try {
+        console.log("IN create comment")
         const { content, user, postID } = req.body
-        checkInput(['content', 'user', 'post'], req.body);
-        const comment = new Comment({ content, user, postID })
+        checkInput(['content', 'user', 'postID'], req.body);
+        const post = await Post.findOne({ _id: postID })
+        if (!post || post.deleted) {
+            throw Error('Post does not exist')
+        }
+        const comment = new Comment({ content, user, post:postID })
         await comment.save()
+        post.comments.push(comment._id)
+        await post.save()
         const userActivity = await UserActivity.findOne({ user })
         userActivity.comments.push(comment._id)
         await userActivity.save()
@@ -65,6 +73,20 @@ export const deleteCommentHelper = async (commentID) => {
         return true;
     } catch (error) {
         return false;
+    }
+}
+
+export const getComments = async (req, res) => {
+    try {
+        const { postID } = req.body;
+        checkInput(['postID'], req.body);
+        const comments = await Comment.find({ post: postID });
+        if (!comments || comments.length === 0) {
+            throw Error('No comments found');
+        }
+        res.status(200).json( comments );
+    } catch (error) {
+        res.status(401).json({ error: error.message })
     }
 }
 

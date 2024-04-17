@@ -38,6 +38,7 @@ export function checkInput(requiredFields, body) {
         })
         .then(signedUrls => {
           // signedUrls[0] contains the URL you can use to publicly access the file
+          console.log("URL", signedUrls[0]);
           resolve(signedUrls[0]);
         })
         .catch(error => {
