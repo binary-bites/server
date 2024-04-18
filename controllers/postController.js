@@ -193,9 +193,16 @@ export const likePost = async (req, res) => {
             post.likes.push(user)
             userActivity.likes.push(post._id)
         }
+        if (post.dislikes.includes(new mongoose.Types.ObjectId(user))) {
+            post.dislikes = post.dislikes.filter(dislike => !dislike.equals(new mongoose.Types.ObjectId(user)))
+            userActivity.dislikes = userActivity.dislikes.filter(dislike => !dislike.equals(new mongoose.Types.ObjectId(postID)))
+        }
         await post.save()
         await userActivity.save()
-        res.status(200).json( post )
+        const liked = post.likes.includes(new mongoose.Types.ObjectId(user))
+        const disliked = post.dislikes.includes(new mongoose.Types.ObjectId(user))
+        const ret = { ...post._doc, liked, disliked}
+        res.status(200).json( ret )
     } catch (error) {
         res.status(401).json({ error: error.message })
     }
@@ -224,9 +231,16 @@ export const dislikePost = async (req, res) => {
             post.dislikes.push(user)
             userActivity.dislikes.push(post._id)
         }
+        if (post.likes.includes(new mongoose.Types.ObjectId(user))) {
+            post.likes = post.likes.filter(like => !like.equals(new mongoose.Types.ObjectId(user)))
+            userActivity.likes = userActivity.likes.filter(like => !like.equals(new mongoose.Types.ObjectId(postID)))
+        }
         await post.save()
         await userActivity.save()
-        res.status(200).json( post )
+        const liked = post.likes.includes(new mongoose.Types.ObjectId(user))
+        const disliked = post.dislikes.includes(new mongoose.Types.ObjectId(user))
+        const ret = { ...post._doc, liked, disliked}
+        res.status(200).json( ret )
     }
     catch (error) {
         res.status(401).json({ error: error.message })
