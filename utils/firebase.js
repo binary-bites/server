@@ -1,7 +1,7 @@
 // firebaseAdmin.ts
 
 import admin from 'firebase-admin';
-import serviceAccount from "../serviceAccount.json" with { type: "json" };;
+import serviceAccount from "../serviceAccount.json" 
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

@@ -27,6 +27,7 @@ export function checkInput(requiredFields, body) {
       });
   
       blobStream.on('error', (error) => {
+        console.error('Something is wrong! Unable to upload at the moment.', error);
         reject('Something is wrong! Unable to upload at the moment.');
       });
   
@@ -42,6 +43,7 @@ export function checkInput(requiredFields, body) {
           resolve(signedUrls[0]);
         })
         .catch(error => {
+          console.error('signedUrl error', error);
           reject('Failed to obtain signed URL');
         });
       });

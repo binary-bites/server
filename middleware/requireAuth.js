@@ -1,3 +1,5 @@
+/* global process */
+
 import User from '../models/userModel.js';
 import { auth } from '../utils/firebase.js';
 

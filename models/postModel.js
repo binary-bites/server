@@ -1,4 +1,4 @@
-import {Schema, model, Types} from 'mongoose';
+import {Schema, model} from 'mongoose';
 
 // modified to support ts from: https://mongoosejs.com/docs/typescript.html
 

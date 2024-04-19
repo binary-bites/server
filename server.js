@@ -1,5 +1,4 @@
-// migrated to typescript - works as before, but run with different command
-// see run.sh for details
+/* global process */
 
 import dotenv from 'dotenv'
 dotenv.config()

@@ -1,12 +1,9 @@
-import User from '../models/userModel.js'
 import Profile from '../models/profileModel.js'
 import UserActivity from '../models/userActivityModel.js'
-import Comment from '../models/commentModel.js'
 import Post from '../models/postModel.js'
 import {checkInput} from '../utils/utils.js'
 import { deleteCommentHelper } from './commentController.js'
 import { mongoose } from 'mongoose'
-import admin from 'firebase-admin'
 import { uploadImageToStorage } from '../utils/utils.js'
   
   
